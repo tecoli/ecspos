@@ -118,3 +118,126 @@ byte[] commands = builder.build();
 
 // 清空指令流以便重複使用
 builder.clear();
+```
+
+# ECSPosBuilder User Manual
+
+The `ECSPosBuilder` class is used to build ESC/POS printer command streams, supporting various formatting and content printing options. This class provides multiple methods for users to customize the printing content and format.
+
+## Method Overview
+
+- **`setTraditionalChineseMode()`**: Sets Traditional Chinese mode for printing.
+- **`setSimplifiedChineseMode()`**: Sets Simplified Chinese mode for printing.
+- **`setKoreanMode()`**: Sets Korean mode.
+- **`setJapaneseMode()`**: Sets Japanese mode.
+- **`setCharset(Charset charset)`**: Sets the character set, default is UTF-8.
+- **`printLine(String text)`**: Prints a line of text with a newline.
+- **`printText(String text)`**: Prints text without a newline.
+- **`printLine()`**: Prints a newline.
+- **`cutPaper()`**: Command to cut the paper.
+- **`setFontSize(double size)`**: Sets font size, supporting 1, 1.5, 2, 3, 4, 5, 6, 7, 8 times.
+- **`setAlignment(Alignment alignment)`**: Sets text alignment (left, center, right).
+- **`setBold(boolean bold)`**: Sets bold text (`true` for bold, `false` for normal).
+- **`setUnderline(int weight)`**: Sets underline (0 for none, 1 for thin, 2 for thick).
+- **`setLineSpacing(int spacing)`**: Sets line spacing in dots (0 to 255).
+- **`setCharacterSet(int set)`**: Sets character set encoding (0 to 15).
+- **`printBarcode(String content, BarCodeType type, int width, int height, int hriPosition)`**: Prints a barcode with specified parameters.
+- **`setInverted(boolean inverted)`**: Sets inverted mode (white on black).
+- **`setLineHeight(int height)`**: Sets line height in dots (0 to 255).
+- **`feedPaper(int dots)`**: Feeds paper by specified dot amount.
+- **`moveTo(int position)`**: Moves horizontally to a specified position.
+- **`setAbsolutePosition(int position)`**: Sets the absolute position in dots.
+- **`printImage(BufferedImage image)`**: Prints an image.
+- **`printQRCode(String content, int size)`**: Prints a QR code with specified content and size.
+- **`cashDrawerOut(int m, int t1, int t2)`**: Opens the cash drawer with specified parameters.
+- **`cashDrawerOut()`**: Opens the cash drawer with default parameters.
+
+## Detailed Description
+
+### Setting Font Size
+
+- `setFontSize(double size)`: Sets the font size with the following multipliers:
+    - `1`: Normal size
+    - `1.5`: 1.5 times
+    - `2`: 2 times
+    - `3`: 3 times
+    - `4`: 4 times
+    - `5`: 5 times
+    - `6`: 6 times
+    - `7`: 7 times
+    - `8`: 8 times
+
+### Setting Text Alignment
+
+- `setAlignment(Alignment alignment)`: Sets the text alignment:
+    - `Alignment.LEFT`: Left alignment
+    - `Alignment.CENTER`: Center alignment
+    - `Alignment.RIGHT`: Right alignment
+
+### Setting Line Spacing
+
+- `setLineSpacing(int spacing)`:
+    - The unit is in dots, typically ranging from `0` to `255`.
+    - Adjusts the spacing between lines for different formatting needs.
+
+### Setting Line Height
+
+- `setLineHeight(int height)`:
+    - Specifies the line height in dots (`0` to `255`).
+    - Examples:
+        - `setLineHeight(24)`: Sets line height to 24 dots.
+    - Can be combined with `setLineSpacing` for better layout control.
+
+### Setting Inverted Mode
+
+- `setInverted(boolean inverted)`:
+    - `true`: Enables inverted mode (white text on a black background).
+    - `false`: Normal mode.
+
+### Printing Barcodes
+
+- `printBarcode(String content, BarCodeType type, int width, int height, int hriPosition)`:
+    - `content`: The content of the barcode.
+    - `type`: Barcode type (e.g., `CODE128`, `EAN13`).
+    - `width`: Barcode width (suggested range `2` to `6`).
+    - `height`: Barcode height.
+    - `hriPosition`: Position of human-readable information (HRI) text (`0` for none, `1` above, `2` below, `3` both).
+
+### Printing QR Codes
+
+- `printQRCode(String content, int size)`:
+    - `content`: The content of the QR code.
+    - `size`: Size of the QR code (typically `1` to `8`, larger numbers for larger sizes).
+
+## Usage Example
+
+```java
+// Create an ECSPosBuilder instance
+ECSPosBuilder builder = new ECSPosBuilder();
+
+// Set to Traditional Chinese printing mode
+builder.setTraditionalChineseMode()
+       .setFontSize(2) // Set font size to 2x
+       .setAlignment(Alignment.CENTER) // Center align text
+       .setBold(true) // Set bold text
+       .printLine("Welcome") // Print a line of text
+       .setBold(false) // Disable bold
+       .printLine("This is a sample line") // Print another line of text
+       .setUnderline(1) // Set underline
+       .printText("Underline example")
+       .printLine() // New line
+       .setUnderline(0) // Disable underline
+       .setLineHeight(30) // Set line height to 30 dots
+       .setLineSpacing(20) // Set line spacing to 20 dots
+       .setInverted(true) // Enable inverted mode
+       .printLine("Inverted text example") // Print inverted text
+       .setInverted(false) // Disable inverted mode
+       .printBarcode("123456789", BarCodeType.CODE128, 2, 50, 2) // Print barcode
+       .cutPaper(); // Cut paper
+
+// Get the final command byte array
+byte[] commands = builder.build();
+
+// Clear the command stream for reuse
+builder.clear();
+```
