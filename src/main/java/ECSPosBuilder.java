@@ -8,45 +8,33 @@ import java.nio.charset.StandardCharsets;
 public class ECSPosBuilder {
 
     private ByteArrayOutputStream commandStream;
-    private boolean paperStatus = true;
-    private boolean drawerStatus = false;
-    private boolean boldMode = false;
-    private boolean underlineMode = false;
-    private boolean doubleHeightMode = false;
-    private boolean doubleWidthMode = false;
-    private boolean inverseMode = false;
-    private int characterSet = 0;
-    private int lineSpacing = 30;
-    private Alignment alignment = Alignment.LEFT;
+
+
     private Charset charset = StandardCharsets.UTF_8;
 
     public ECSPosBuilder() {
         commandStream = new ByteArrayOutputStream();
     }
 
-    public ECSPosBuilder initialize() {
-        sendCommand(new byte[]{0x1B, 0x40});
-        resetPrintModes();
-        return this;
-    }
+
 
     public ECSPosBuilder setTraditionalChineseMode() {
-        sendCommand(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x01});
+        command(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x01});
         return this;
     }
 
     public ECSPosBuilder setSimplifiedChineseMode() {
-        sendCommand(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x00});
+        command(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x00});
         return this;
     }
 
     public ECSPosBuilder setKoreanMode() {
-        sendCommand(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x02});
+        command(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x02});
         return this;
     }
 
     public ECSPosBuilder setJapaneseMode() {
-        sendCommand(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x03});
+        command(new byte[]{0x1F, 0x1B, 0x1F, 0x46, 0x4F, 0x4E, 0x54, 0x03});
         return this;
     }
 
@@ -63,7 +51,7 @@ public class ECSPosBuilder {
 
     public ECSPosBuilder printText(String text) {
         try {
-            sendCommand(text.getBytes("GBK"));
+            command(text.getBytes("GBK"));
         } catch (UnsupportedEncodingException e) {
             throw new RuntimeException(e);
         }
@@ -71,22 +59,44 @@ public class ECSPosBuilder {
     }
 
     public ECSPosBuilder printLine() {
-        sendCommand(new byte[]{0x0A});
+        command(new byte[]{0x0A});
         return this;
     }
 
     public ECSPosBuilder cutPaper() {
-        sendCommand(new byte[]{0x1D, 0x56, 0x41, 0x00});
+        command(new byte[]{0x1D, 0x56, 0x41, 0x00});
         return this;
     }
 
-    public ECSPosBuilder setFontSize(int size) {
-        sendCommand(new byte[]{29, 33, (byte) (size)});
+    public ECSPosBuilder setFontSize(double size) {
+        int n = 0;
+        if(size == 1) {
+            n = 0;
+        } else if(size == 1.5) {
+            n = 0x88;
+        } else if(size == 2) {
+            n = 0x11;
+        } else if(size == 3) {
+            n = 0x22;
+        } else if(size == 4) {
+            n = 0x33;
+        } else if(size == 5) {
+            n = 0x44;
+        } else if(size == 6) {
+            n = 0x55;
+        } else if(size == 7) {
+            n = 0x66;
+        } else if(size == 8) {
+            n = 0x77;
+        } else {
+            throw new IllegalArgumentException("font size only 1,1.5,2,3,4,5,6,7,8");
+        }
+        command(new byte[]{29, 33, (byte) (n)});
         return this;
     }
 
     public ECSPosBuilder setAlignment(Alignment alignment) {
-        this.alignment = alignment;
+
         byte value;
         switch (alignment) {
             case LEFT:
@@ -101,66 +111,67 @@ public class ECSPosBuilder {
             default:
                 throw new IllegalArgumentException("Invalid alignment: " + alignment);
         }
-        sendCommand(new byte[]{27, 97, value});
+        command(new byte[]{27, 97, value});
         return this;
     }
 
     public ECSPosBuilder setBold(boolean bold) {
-        this.boldMode = bold;
-        sendCommand(new byte[]{0x1B, 0x45, (byte) (bold ? 1 : 0)});
+
+        command(new byte[]{0x1B, 0x45, (byte) (bold ? 1 : 0)});
         return this;
     }
 
     public ECSPosBuilder setUnderline(int weight) {
-        this.underlineMode = (weight > 0);
-        sendCommand(new byte[]{0x1B, 0x2D, (byte) weight});
+
+        command(new byte[]{0x1B, 0x2D, (byte) weight});
         return this;
     }
 
     public ECSPosBuilder setLineSpacing(int spacing) {
-        this.lineSpacing = spacing;
-        sendCommand(new byte[]{0x1B, 0x33, (byte) spacing});
+
+        command(new byte[]{0x1B, 0x33, (byte) spacing});
         return this;
     }
 
     public ECSPosBuilder setCharacterSet(int set) {
         if (set >= 0 && set <= 15) {
-            this.characterSet = set;
-            sendCommand(new byte[]{0x1B, 0x52, (byte) set});
+
+            command(new byte[]{0x1B, 0x52, (byte) set});
         }
         return this;
     }
 
     public ECSPosBuilder printBarcode(String content, BarCodeType type, int width, int height, int hriPosition) {
-        sendCommand(new byte[]{0x1D, 0x68, (byte) height});
-        sendCommand(new byte[]{0x1D, 0x77, (byte) width});
-        sendCommand(new byte[]{0x1D, 0x6B, (byte) type.ordinal()});
-        sendCommand(content.getBytes(charset));
-        sendCommand(new byte[]{0});
+        command(new byte[]{0x1D, 0x68, (byte) height});
+        command(new byte[]{0x1D, 0x77, (byte) width});
+        command(new byte[]{0x1D, 0x6B, (byte) type.ordinal()});
+        command(content.getBytes(charset));
+        command(new byte[]{0});
         return this;
     }
+
     public ECSPosBuilder setInverted(boolean inverted) {
-        sendCommand(new byte[]{29, 66, (byte) (inverted ? 1 : 0)});
+        command(new byte[]{29, 66, (byte) (inverted ? 1 : 0)});
         return this;
     }
 
     public ECSPosBuilder setLineHeight(int height) {
-        sendCommand(new byte[]{0x1B, 0x33, (byte) height});
+        command(new byte[]{0x1B, 0x33, (byte) height});
         return this;
     }
 
     public ECSPosBuilder feedPaper(int dots) {
-        sendCommand(new byte[]{0x1B, 0x4A, (byte) dots});
+        command(new byte[]{0x1B, 0x4A, (byte) dots});
         return this;
     }
 
     public ECSPosBuilder moveTo(int position) {
-        sendCommand(new byte[]{0x1B, 0x24, (byte) (position & 0xFF), (byte) ((position >> 8) & 0xFF)});
+        command(new byte[]{0x1B, 0x24, (byte) (position & 0xFF), (byte) ((position >> 8) & 0xFF)});
         return this;
     }
 
     public ECSPosBuilder setAbsolutePosition(int position) {
-        sendCommand(new byte[]{0x1B, 0x24, (byte) (position % 256), (byte) (position / 256)});
+        command(new byte[]{0x1B, 0x24, (byte) (position % 256), (byte) (position / 256)});
         return this;
     }
 
@@ -191,7 +202,7 @@ public class ECSPosBuilder {
                 }
             }
             buf.write(buffer);
-            sendCommand(buf.toByteArray());
+            command(buf.toByteArray());
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
@@ -203,26 +214,51 @@ public class ECSPosBuilder {
         return this;
     }
 
-    private void resetPrintModes() {
-        boldMode = false;
-        underlineMode = false;
-        doubleHeightMode = false;
-        doubleWidthMode = false;
-        inverseMode = false;
-        alignment = Alignment.LEFT;
-        lineSpacing = 30;
-        characterSet = 0;
+    /**
+     * 設置加粗<br>
+     * 15、 ESC E n 選擇/取消加粗模式
+     *
+     * @param n 0≦n≦255<br>
+     *          n的最低位為0時,取消加粗模式<br>
+     *          n的最低位為1時,選擇加粗模式<br>
+     */
+    public ECSPosBuilder setBold(int n) {
+        commandStream.write(27);
+        commandStream.write(69);
+        commandStream.write(n);
+        return this;
     }
 
-    private void sendCommand(byte[] command) {
+    /**
+     * 設置反白/反黑 打印模式
+     * 33、 GS B n 選擇/取消黑白反顯打印模式
+     *
+     * @param n 0≦n≦255<br>
+     *          n的最低位為0時,取消反顯打印<br>
+     *          n的最低位為1時,選擇反顯打印
+     */
+    public ECSPosBuilder setInverted(int n) {
+        commandStream.write(29);
+        commandStream.write(66);
+        commandStream.write(n);
+        return this;
+    }
+
+
+
+    private ECSPosBuilder command(byte[] command) {
         try {
             commandStream.write(command);
         } catch (IOException e) {
             e.printStackTrace();
         }
+        return ECSPosBuilder.this;
     }
 
+
     public byte[] build() {
+        command(new byte[]{0x1B, 0x40});
+
         return commandStream.toByteArray();
     }
 
@@ -230,13 +266,11 @@ public class ECSPosBuilder {
         commandStream.reset();
     }
 
-    public boolean checkPrinterStatus() {
-        return paperStatus && !drawerStatus;
-    }
+
 
 
     public ECSPosBuilder cashDrawerOut(int m, int t1, int t2) {
-        sendCommand(new byte[]{27, 112, (byte) m, (byte) t1, (byte) t2});
+        command(new byte[]{27, 112, (byte) m, (byte) t1, (byte) t2});
         return this;
     }
 
@@ -244,11 +278,5 @@ public class ECSPosBuilder {
         return cashDrawerOut(0, 10, 0);
     }
 
-    public static String bytesToHex(byte[] bytes) {
-        StringBuilder sb = new StringBuilder();
-        for (byte b : bytes) {
-            sb.append(String.format("%02X ", b));
-        }
-        return sb.toString();
-    }
+
 }

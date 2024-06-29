@@ -104,7 +104,7 @@ public class InvoiceECSPosBuilder {
         graphics.drawImage(bufferedImage1, 0, 0, null);
         graphics.drawImage(bufferedImage2, qrcodeSize + margin, 0, null);
 
-        builder.initialize()
+        builder
                 .setCharset(StandardCharsets.UTF_8)
 
                 .setAlignment(Alignment.CENTER)
