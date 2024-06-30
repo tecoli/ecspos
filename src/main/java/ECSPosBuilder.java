@@ -43,9 +43,9 @@ public class ECSPosBuilder {
         return this;
     }
 
-    public ECSPosBuilder printLine(String text) {
+    public ECSPosBuilder newLine(String text) {
         printText(text);
-        printLine();
+        newLine();
         return this;
     }
 
@@ -58,7 +58,7 @@ public class ECSPosBuilder {
         return this;
     }
 
-    public ECSPosBuilder printLine() {
+    public ECSPosBuilder newLine() {
         command(new byte[]{0x0A});
         return this;
     }
@@ -72,8 +72,6 @@ public class ECSPosBuilder {
         int n = 0;
         if(size == 1) {
             n = 0;
-        } else if(size == 1.5) {
-            n = 0x88;
         } else if(size == 2) {
             n = 0x11;
         } else if(size == 3) {
@@ -88,9 +86,12 @@ public class ECSPosBuilder {
             n = 0x66;
         } else if(size == 8) {
             n = 0x77;
+        } else if(size == 1.5) {
+            n = 0x01;
         } else {
             throw new IllegalArgumentException("font size only 1,1.5,2,3,4,5,6,7,8");
         }
+        System.out.println(size + ":" + n);
         command(new byte[]{29, 33, (byte) (n)});
         return this;
     }
@@ -277,6 +278,17 @@ public class ECSPosBuilder {
     public ECSPosBuilder cashDrawerOut() {
         return cashDrawerOut(0, 10, 0);
     }
-
+    public static int charsWidth(String text) {
+        int width = 0;
+        int itemLength = text.length();
+        //判斷全形半形長度
+        for (int i = 0; i < itemLength; i++) {
+            char c = text.charAt(i);
+            // 檢查字符是否為半形。如果字符位於 ASCII 可打印字符範圍內（即字符碼介於 33 到 126 之間），則認為是半形字符，其寬度計為 1。
+            // 若不在此範圍內，則預設為全形字符，其寬度計為 2。
+            width += (c >= 32 && c <= 126) ? 1 : 2;
+        }
+        return width;
+    }
 
 }
